@@ -5,3 +5,6 @@ __pycache__/
 # Distribution / packaging
 .Python
 dev/
+
+# Vscode
+.vscode
