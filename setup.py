@@ -11,6 +11,22 @@ cur_dir_path = os.path.dirname(os.path.abspath(sys.argv[0]))
 data_path = os.path.join(cur_dir_path, 'data')
 userdata_file = os.path.join(data_path, 'userdata.csv')
 
+def get_user_data(userdata):
+    api_key = input("Enter api key: ")
+    api_secret = input("Enter api secret: ")
+    userdata.loc[0, 'api_key'] = api_key
+    userdata.loc[0, 'api_secret'] = api_secret
+    return userdata
+    
+
+def check_data_validity(userdata):
+    if not (userdata.loc[0, 'api_key'].isalnum() and userdata.loc[0, 'api_secret'].isalnum()): 
+        print("Provide valid api_key/api_secret")
+        print("--------------------------------")
+        return False
+    return True    
+
+
 def setup():
     try:
         if (not os.path.exists(data_path)):
@@ -26,13 +42,17 @@ def setup():
                     "token_req_date" : [],
 
                 })
-            api_key = input("Enter api key: ")
-            api_secret = input("Enter api secret: ")
-            userdata.loc[0, 'api_key'] = api_key
-            userdata.loc[0, 'api_secret'] = api_secret
+            userdata = get_user_data(userdata)
+            while not check_data_validity(userdata):
+                get_user_data(userdata)
             userdata.to_csv(userdata_file, index=False)
+        else:
+            userdata = pd.read_csv(userdata_file)
+            while not check_data_validity(userdata):
+                get_user_data(userdata)
     except Exception as e:
-        print("** ERROR in setup. ", e, datetime.datetime.now())
+        print("** ERROR in setup. Run setup.py again.", e, datetime.datetime.now())
+        #setup()
 
 def is_valid_token(api_key, access_token):
     try:
