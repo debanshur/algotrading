@@ -4,6 +4,7 @@ import os
 import sys
 import datetime
 import logging
+import math 
 
 logging.basicConfig(level=logging.INFO)
 
@@ -20,7 +21,8 @@ def get_user_data(userdata):
     
 
 def check_data_validity(userdata):
-    if not (userdata.loc[0, 'api_key'].isalnum() and userdata.loc[0, 'api_secret'].isalnum()): 
+    if userdata.isnull().loc[0,'api_key'] or userdata.isnull().loc[0,'api_secret'] \
+                or (not userdata.loc[0, 'api_key'].isalnum()) or (not userdata.loc[0, 'api_secret'].isalnum()):
         print("Provide valid api_key/api_secret")
         print("--------------------------------")
         return False
@@ -50,9 +52,10 @@ def setup():
             userdata = pd.read_csv(userdata_file)
             while not check_data_validity(userdata):
                 get_user_data(userdata)
+            userdata.to_csv(userdata_file, index=False)
     except Exception as e:
         print("** ERROR in setup. Run setup.py again.", e, datetime.datetime.now())
-        #setup()
+        
 
 def is_valid_token(api_key, access_token):
     try:

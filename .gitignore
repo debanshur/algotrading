@@ -2,6 +2,9 @@
 __pycache__/
 *.py[cod]
 
+# Csv files
+*.csv
+
 # Distribution / packaging
 .Python
 dev/
