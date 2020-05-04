@@ -37,11 +37,13 @@ def setup():
         if (not os.path.exists(userdata_file)):
             userdata = pd.DataFrame(
                 {
+                    "user_id" : [],
                     "user_name" : [],
                     "api_key" : [],
                     "api_secret" : [],
                     "access_token" : [],
-                    "token_req_date" : [],
+                    "public_token" : [],
+                    "token_req_date" : []
 
                 })
             userdata = get_user_data(userdata)
@@ -80,6 +82,8 @@ def generate_token(userdata):
         #print(res)
         userdata.loc[0, 'access_token'] = res['access_token']
         userdata.loc[0, 'user_name'] = res['user_name']
+        userdata.loc[0, 'user_id'] = res['user_id']
+        userdata.loc[0, 'public_token'] = res['public_token']
         userdata.loc[0, 'token_req_date'] = datetime.datetime.now()
         userdata.to_csv(userdata_file, index=False)
     except Exception as e:
