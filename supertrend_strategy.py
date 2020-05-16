@@ -44,7 +44,7 @@ def compute_data(token):
     global one_hour_rsi
     #enddate = datetime.datetime(2020, 5, 4, 15,30,0,0)
     enddate = datetime.datetime.today()
-    startdate = enddate - datetime.timedelta(10)
+    startdate = enddate - datetime.timedelta(3)
     try:
         df = historical_data.get(kite, token, startdate, enddate, candlesize)
         df = SuperTrend.calc(df, supertrend_period, supertrend_multiplier)
@@ -233,8 +233,7 @@ def run():
                 last_time = time.time() + schedule_interval
                 print("\n\n {} Run Count : Time - {} ".format(runcount, datetime.datetime.now()))
                 if runcount >= 0:
-                    try:
-                        check_order_status()    
+                    try:    
                         run_strategy()
                     except Exception as e:
                         print("******* Run Error *********", e)
