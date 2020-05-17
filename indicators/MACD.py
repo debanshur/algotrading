@@ -1,5 +1,7 @@
 import numpy as np
 from indicators import EMA
+
+
 def calc(df, fastEMA=12, slowEMA=26, signal=9, base='close'):
     """
     Function to compute Moving Average Convergence Divergence (MACD)
@@ -38,5 +40,6 @@ def calc(df, fastEMA=12, slowEMA=26, signal=9, base='close'):
     
     # Compute MACD Histogram
     df[hist] = np.where(np.logical_and(np.logical_not(df[macd] == 0), np.logical_not(df[sig] == 0)), df[macd] - df[sig], 0)
+    df.drop(['ema_12', 'ema_26'], inplace=True, axis=1)
     
     return df
