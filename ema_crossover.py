@@ -206,46 +206,66 @@ def check_order_status():
 
 def run():
     global runcount
-    start_time = int(9) * 60 + int(45)  # specify in int (hr) and int (min) foramte
+    global exitcount
+    start_time = int(12) * 60 + int(1)  # specify in int (hr) and int (min) foramte
     end_time = int(14) * 60 + int(55)  # do not place fresh order
     square_time = int(15) * 60 + int(5)  # square off all open positions
-    last_time = start_time
-    schedule_interval = 60  # run at every 1 min
+
+    next_time = start_time
+
+    if (datetime.datetime.now().minute + (5 - (datetime.datetime.now().minute % 5)))%10 == 0:
+        next_time = datetime.datetime.now().hour * 60 + \
+            ((datetime.datetime.now().minute + (5 - (datetime.datetime.now().minute % 5))) + 5)
+
+    else :
+        next_time = datetime.datetime.now().hour * 60 + \
+            (datetime.datetime.now().minute + (5 - (datetime.datetime.now().minute % 5)))
+
+    schedule_interval = 600  # run at every 1 min
+
+    time_offset = (5 - (datetime.datetime.now().minute % 5)) * 60
+    exit_time = datetime.datetime.now().hour * 60 + \
+            (datetime.datetime.now().minute + (5 - (datetime.datetime.now().minute % 5)))
     #runcount = 0
     check_order_status()
     while True:
-        if (datetime.datetime.now().hour * 60 + datetime.datetime.now().minute) >= end_time:
-            if (datetime.datetime.now().hour * 60 + datetime.datetime.now().minute) >= square_time:
-                #function to square of all open positions & cancel all pending Orders
-
-                print("***** Trading day closed *****")
-                break
+        check_order_status(immediate=True)
+        #time.sleep(1)
+        if (datetime.datetime.now().hour * 60 + datetime.datetime.now().minute) >= square_time:
+            check_order_status(force=True)
+            print("***** Trading day closed *****")
+            break
 
         elif (datetime.datetime.now().hour * 60 + datetime.datetime.now().minute) >= start_time:
-            if time.time() >= last_time:
-                last_time = time.time() + schedule_interval
+
+            if datetime.datetime.now().hour * 60 + datetime.datetime.now().minute >= exit_time:
+                exit_time = datetime.datetime.now().hour * 60 + datetime.datetime.now().minute + 5
+                time.sleep(2)
+                print("\n\n {} Exit Count : Time - {} ".format(exitcount, datetime.datetime.now()))
+                if exitcount >= 0:
+                    try:
+                        check_order_status()
+                    except Exception as e:
+                        print("******* Run Error *********", e)
+                exitcount = exitcount + 1
+
+            if datetime.datetime.now().hour * 60 + datetime.datetime.now().minute >= next_time:
+                next_time = datetime.datetime.now().hour * 60 + datetime.datetime.now().minute + 10
+                time.sleep(2)
                 print("\n\n {} Run Count : Time - {} ".format(runcount, datetime.datetime.now()))
                 if runcount >= 0:
-                    try:  
+                    try:
                         run_strategy()
                     except Exception as e:
                         print("******* Run Error *********", e)
                 runcount = runcount + 1
+
         else:
             print('****** Waiting ********', datetime.datetime.now())
             time.sleep(5)
 
-runcount = 0
-def run1():
-    try:
-        #check_order_status()
-        run_strategy()
-        print(kite.orders())
-        print("----------------------------------------------")
-        print(kite.positions())
-    except Exception as e:
-        print("Run error", e)
 
+runcount = 0
 
 run1()
 
