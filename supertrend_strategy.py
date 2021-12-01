@@ -18,6 +18,10 @@ candlesize = '10minute'
 one_hour_rsi = 50
 orderslist = {}
 
+# set datetime global timezone as India
+os.environ['TZ'] = 'Asia/Kolkata'
+time.tzset()
+
 #pd.set_option('display.max_columns',50)
 pd.set_option('display.max_rows', None)
 print("\n******** Started ********* : ", datetime.datetime.now())
@@ -28,7 +32,7 @@ print("\n******** Started ********* : ", datetime.datetime.now())
 userdata = auth.get_userdata()
 kite = KiteConnect(api_key=userdata['api_key'])
 kite.set_access_token(userdata['access_token'])
-    
+
 print("******** UserData Loaded ********* : ", datetime.datetime.now())
 
 #list all tickers you want to trade
@@ -132,7 +136,7 @@ def run_strategy():
                                              validity='DAY',
                                              variety="regular"
                                              )
-                
+
                 print("         Order : ", "BUY", tickerlist[i], "high : ", high,"quantity:",quantity, "price:",price,datetime.datetime.now())
 
             if super_trend[-1]=='down' and super_trend[-2]=='down' and super_trend[-3]=='up' and super_trend[-4]=='up' \
@@ -185,10 +189,10 @@ def check_order_status1():
     for ind in df.index:
         token = df['tradingsymbol'][ind]
         if token in orderslist:
-            orderslist.pop(token) 
+            orderslist.pop(token)
         else:
             orderslist[token] = "0"
-        #print(df['tradingsymbol'][ind], df['transaction_type'][ind]) 
+        #print(df['tradingsymbol'][ind], df['transaction_type'][ind])
 
     print(orderslist)
     return df
@@ -208,7 +212,7 @@ def check_order_status():
     for ind in df.index:
         token = df['tradingsymbol'][ind]
         orderslist[token] = "0"
-        #print(df['tradingsymbol'][ind], df['transaction_type'][ind]) 
+        #print(df['tradingsymbol'][ind], df['transaction_type'][ind])
 
     print(orderslist)
     return df
@@ -233,7 +237,7 @@ def run():
                 last_time = time.time() + schedule_interval
                 print("\n\n {} Run Count : Time - {} ".format(runcount, datetime.datetime.now()))
                 if runcount >= 0:
-                    try:    
+                    try:
                         run_strategy()
                     except Exception as e:
                         print("******* Run Error *********", e)
