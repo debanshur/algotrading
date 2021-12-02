@@ -1,6 +1,8 @@
 #run python script inside docker container
 # python3 ./supertrend_strategy.py
 
+---
+version: '3'
 services:
   supertrend:
     image: python:3.6
@@ -8,4 +10,3 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    restart: unless-stopped
