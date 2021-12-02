@@ -230,11 +230,7 @@ def run():
         if (datetime.datetime.now().hour * 60 + datetime.datetime.now().minute) >= end_time:
             if (datetime.datetime.now().hour * 60 + datetime.datetime.now().minute) >= stop_time:
                 print("***** Trading day closed *****")
-                # sleep till next trading day
-                while (datetime.datetime.now().hour * 60 + datetime.datetime.now().minute) < start_time:
-                    print("***** Waiting for next trading day *****")
-                    time.sleep(60)
-                    check_order_status()
+                break
 
         elif (datetime.datetime.now().hour * 60 + datetime.datetime.now().minute) >= start_time:
             if time.time() >= last_time:
