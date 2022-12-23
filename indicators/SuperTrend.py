@@ -1,6 +1,7 @@
 from indicators import ATR
 import numpy as np
 
+
 def calc(df, period, multiplier, ohlc=['open', 'high', 'low', 'close']):
     """
     Function to compute SuperTrend

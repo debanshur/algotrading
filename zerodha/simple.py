@@ -26,6 +26,7 @@ except Exception as e:
     logging.info("Order placement failed: {}".format(e.message))
 
 # Fetch all orders
-orders = kite.orders()
-print(orders)
+if __name__ == '__main__':
+    orders = kite.orders()
+    print(orders)
 

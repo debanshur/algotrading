@@ -1,10 +1,6 @@
 from kiteconnect import KiteConnect
-from math import floor, ceil
 import datetime
 import pandas as pd
-import numpy as np
-import sys
-import os
 import time
 
 from modules import auth
@@ -205,7 +201,7 @@ def check_order_status():
     return df
 
 def run():
-    global runcount
+    global run_count
     global exitcount
     start_time = int(12) * 60 + int(1)  # specify in int (hr) and int (min) foramte
     end_time = int(14) * 60 + int(55)  # do not place fresh order
@@ -265,7 +261,7 @@ def run():
             time.sleep(5)
 
 
-runcount = 0
+run_count = 0
 
 run1()
 
