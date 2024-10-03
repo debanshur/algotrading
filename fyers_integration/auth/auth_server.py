@@ -1,9 +1,9 @@
 from flask import Flask, json, request
 
 from json_util import get_json_value
+from datetime import datetime
 
 app = Flask(__name__)
-
 
 @app.route('/', methods=['GET'])
 def get_auth_code():
@@ -23,6 +23,7 @@ def update_auth_code(auth_code):
         data = json.load(f)
         data['auth_code'] = auth_code  # <--- add `id` value.
         data['update'] = "1"  # <--- add `id` value.
+        data['time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         f.seek(0)  # <--- should reset file position to the beginning.
         json.dump(data, f, indent=4)
         f.truncate()  # remove remaining part

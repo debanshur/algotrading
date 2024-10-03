@@ -12,3 +12,22 @@ data/
 
 # Vscode
 .vscode
+
+# Ignore IntelliJ IDEA project files
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# User-specific files
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/dictionaries
+.idea/libraries
+.idea/vcs.xml
+
+# Avoid ignoring Android Studio / WebStorm libraries
+!.idea/libraries/
+
+# Ignore run/debug configurations
+.idea/**/runConfigurations/*.xml

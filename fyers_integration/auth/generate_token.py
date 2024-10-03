@@ -6,13 +6,14 @@ import time
 
 import requests
 from fyers_api import accessToken
+from fyers_api import fyersModel
 import webbrowser
 
 from json_util import update_json_key, get_json_value
 
 redirect_uri = "http://localhost:27070/"
-client_id = "SLWIS8N2SP-100"
-secret_key = "286AWK1K2I"
+client_id = "TC8P3VH4H7-100"
+secret_key = "N62SJV5GDD"
 grant_type = "authorization_code"
 
 
