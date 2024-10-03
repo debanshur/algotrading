@@ -4,3 +4,4 @@ Traceback (most recent call last):
   File "/Users/debanshu.rout/repo/external/algotrading/fyers_integration/strategy.py", line 245, in run
     curr_time = datetime.datetime.now().hour * 60 + datetime.datetime.now().minute
 KeyboardInterrupt
+test
