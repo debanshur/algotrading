@@ -1,6 +1,11 @@
-Activate new app
+Activate app (if created new)[OPTIONAL]
 https://api-t1.fyers.in/api/v3/generate-authcode?client_id=Q9494VAZSX-100&redirect_uri=http://127.0.0.1:27070/generate-authcode&response_type=code&state=ABCD
-Run Auth Server
-Step 1 : Run auth/auth_server.py
 
+Run Auth Server
+Step 1 : Update client id, redirect uri, & secret in data/token.json [OPTIONAL]
+Step 2 : Run auth/auth_server.py
+Step 3 : Open in browser http://127.0.0.1:27070/login
+
+For Token Refresh
+Open in browser http://127.0.0.1:27070/refresh-token
 
