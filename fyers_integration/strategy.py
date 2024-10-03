@@ -5,8 +5,6 @@ import requests
 from fyers_api import accessToken, fyersModel
 
 
-
-
 from fyers_integration.util import get_historical_data
 from indicators import SuperTrend, EMA, MACD, RSI
 import datetime
