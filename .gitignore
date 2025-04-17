@@ -13,10 +13,8 @@ data/
 # Vscode
 .vscode
 
-# IDE
-.idea/
-
-# Context related files
+# IDE and configuration files
 .context/
 .cursorrules
+.idea/
 context.yaml
