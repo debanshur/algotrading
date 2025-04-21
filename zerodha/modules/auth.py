@@ -7,8 +7,12 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
-cur_dir_path = os.path.dirname(os.path.abspath(sys.argv[0]))
-data_path = os.path.join(cur_dir_path, 'data')
+# Get the directory where this module is located
+module_dir = os.path.dirname(os.path.abspath(__file__))
+# Go up one level to get the zerodha directory
+zerodha_dir = os.path.dirname(module_dir)
+# Set the data path relative to the zerodha directory
+data_path = os.path.join(zerodha_dir, '../data')
 userdata_file = os.path.join(data_path, 'userdata.csv')
 
 def is_valid_token(api_key, access_token):

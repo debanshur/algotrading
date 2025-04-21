@@ -38,3 +38,11 @@ typing==3.10.0.0
 urllib3==1.26.15
 websocket-client==0.59.0
 zope.interface==5.5.2
+kiteconnect==4.2.0
+pandas>=1.3.0
+service_identity==24.2.0
+pyOpenSSL==25.0.0
+cryptography==44.0.2
+attrs>=19.1.0
+pyasn1>=0.6.1
+pyasn1-modules>=0.4.2
