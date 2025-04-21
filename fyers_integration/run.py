@@ -3,7 +3,7 @@ from fyers_api import accessToken, fyersModel
 
 from auth.json_util import get_json_value
 access_token = get_json_value('access_token')
-client_id = "SLWIS8N2SP-100"
+client_id = "TC8P3VH4H7-100"
 
 fyers = fyersModel.FyersModel(token=access_token, is_async=False, client_id=client_id, log_path="/Users/debanshu.rout/repo/external/algotrading/log")
 
@@ -13,11 +13,13 @@ fyers = fyersModel.FyersModel(token=access_token, is_async=False, client_id=clie
 """
 1. User Apis : This includes (Profile,Funds,Holdings)
 """
-
+print("---- GET PROFILE----")
 print(fyers.get_profile())  ## This will provide us with the user related data
 
+print("---- GET FUNDS----")
 print(fyers.funds())  ## This will provide us with the funds the user has
 
+print("---- GET HOLDINGS----")
 print(fyers.holdings())  ## This will provide the available holdings the user has
 
 ########################################################################################################################
@@ -26,10 +28,13 @@ print(fyers.holdings())  ## This will provide the available holdings the user ha
 2. Transaction Apis : This includes (Tradebook,Orderbook,Positions)
 """
 
+print("---- GET TRADEBOOK----")
 print(fyers.tradebook())  ## This will provide all the trade related information
 
+print("---- GET ORDERBOOK----")
 print(fyers.orderbook())  ## This will provide the user with all the order realted information
 
+print("---- GET POSITIONS----")
 print(fyers.positions())  ## This will provide the user with all the positions the user has on his end
 
 ######################################################################################################################
@@ -44,9 +49,9 @@ b. multi order : this is used to place a basket of order but the basket size can
 ## SINGLE ORDER
 
 data = {
-    "symbol": "NSE:ONGC-EQ",
+    "symbol": "NSE:SBIN-EQ",
     "qty": 1,
-    "type": 1,
+    "type": 2,
     "side": 1,
     "productType": "INTRADAY",
     "limitPrice": 0,
@@ -58,6 +63,7 @@ data = {
     "takeProfit": 0
 }  ## This is a samplea example to place a limit order you can make the further changes based on your requriements
 
+print("---- GET PLACE ORDER----")
 print(fyers.place_order(data))
 
 ## MULTI ORDER
@@ -90,7 +96,7 @@ data = [{"symbol": "NSE:SBIN-EQ",
             "takeProfit": 0
         }]  ### This takes input as a list containing multiple single order data into it and the execution of the orders goes in the same format as mentioned.
 
-print(fyers.place_basket_orders(data))
+#print(fyers.place_basket_orders(data))
 
 ###################################################################################################################
 
@@ -106,6 +112,7 @@ data = {
     "qty": 1
 }
 
+print("---- GET MODIFY ORDER----")
 print(fyers.modify_order(data))
 
 ## Modify Multi Order
@@ -123,10 +130,12 @@ data = [
         "qty": 1
     }]
 
-print(fyers.modify_basket_orders(data))
+#print(fyers.modify_basket_orders(data))
 
 ### Cancel_order
 data = {"id": '808058117761'}
+
+print("---- GET CANCEL ORDER----")
 print(fyers.cancel_order(data))
 
 ### cancel_multi_order
@@ -138,13 +147,14 @@ data = [
         "id": '808058117762'
     }]
 
-print(fyers.cancel_basket_orders(data))
+#print(fyers.cancel_basket_orders(data))
 
 ### Exit Position
 data = {
     "id": "NSE:SBIN-EQ-INTRADAY"
 }
 
+print("---- GET EXIT ORDER----")
 print(fyers.exit_positions(data))
 
 ### Convert Position
@@ -157,7 +167,7 @@ data = {
     "convertTo": "CNC"
 }
 
-print(fyers.convert_position(data))
+#print(fyers.convert_position(data))
 
 #################################################################################################################
 
@@ -170,14 +180,17 @@ DATA APIS : This includes following Apis(History,Quotes,MarketDepth)
 data = {"symbol": "NSE:SBIN-EQ", "resolution": "D", "date_format": "0", "range_from": "1622097600",
         "range_to": "1622097685", "cont_flag": "1"}
 
+print("---- GET HISTORY DATA----")
 print(fyers.history(data))
 
 ## Quotes
 
 data = {"symbols": "NSE:SBIN-EQ"}
+print("---- GET QUOTES DATA----")
 print(fyers.quotes(data))
 
 ## Market Depth
 
 data = {"symbol": "NSE:SBIN-EQ", "ohlcv_flag": "1"}
+print("---- GET MARKET DEPTH DATA----")
 print(fyers.depth(data))

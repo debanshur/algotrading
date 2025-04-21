@@ -5,18 +5,20 @@ import requests
 from fyers_api import accessToken, fyersModel
 
 
+
+
 from fyers_integration.util import get_historical_data
-from indicators import SuperTrend, EMA, MACD, RSI
+from indicators import SuperTrend, EMA, MACD, RSI, MFI, VWAP
 import datetime
 
 from auth.json_util import get_json_value
 
-pd.set_option('display.max_rows', None)
-pd.set_option('display.max_columns', None)
+# pd.set_option('display.max_rows', None)
+# pd.set_option('display.max_columns', None)
 
 
 access_token = get_json_value('access_token')
-client_id = "SLWIS8N2SP-100"
+client_id = "TC8P3VH4H7-100"
 fyers = fyersModel.FyersModel(token=access_token, is_async=False, client_id=client_id, log_path="/Users/debanshu.rout/repo/external/algotrading/log")
 #print(fyers.get_profile()['data']['name'])
 
@@ -35,16 +37,21 @@ def compute_data(stock):
     global one_hour_rsi
     #enddate = datetime.datetime(2020, 5, 4, 15,30,0,0)
     end_date = datetime.datetime.today()
-    start_date = end_date - datetime.timedelta(10)
+    start_date = end_date - datetime.timedelta(5)
 
     try:
         df = get_historical_data(fyers, stock, time_frame, start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
 
-        df = SuperTrend.calc(df, supertrend_period, supertrend_multiplier)
-        df = MACD.calc(df)
-        rsi = get_historical_data(fyers, stock, "60", start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
-        rsi = RSI.calc(rsi)
-        one_hour_rsi = rsi.RSI_14.values[-1]
+        df = EMA.calc(df, 'close', 'ema_5', 5)
+        #df = EMA.calc(df, 'close', 'ema_20', 20)
+        #df = MACD.calc(df)
+        #df = MFI.calc(df)
+        #df = VWAP.calc(df)
+
+        #df = SuperTrend.calc(df, supertrend_period, supertrend_multiplier)
+        #rsi = get_historical_data(fyers, stock, "60", start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
+        #rsi = RSI.calc(rsi)
+        #one_hour_rsi = rsi.RSI_14.values[-1]
 
         print(df)
     except Exception as e:
@@ -275,8 +282,8 @@ def run():
 
 
 if __name__ == '__main__':
-    run()
-    #compute_data()
+    #run()
+    compute_data('NSE:SBIN-EQ')
     #print(fyers.tradebook())  ## This will provide all the trade related information
 
     #print(fyers.orderbook())  ## This will provide the user with all the order realted information
