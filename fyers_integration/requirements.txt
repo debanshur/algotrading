@@ -15,4 +15,4 @@ requests==2.27.1
 six==1.16.0
 urllib3==1.26.9
 Werkzeug==2.1.2
-zipp==3.8.1
+zipp==3.19.1
