@@ -8,8 +8,12 @@ from modules import historical_data
 from indicators import MACD, RSI, EMA, MFI, VWAP
 
 candlesize = '10minute'
-one_hour_rsi = 50
 orderslist = {}
+mfilist = {}
+trailing_sl = {}
+one_hour_rsi = 50
+one_hour_mfi = 50
+reason = ""
 
 #pd.set_option('display.max_columns',50)
 pd.set_option('display.max_rows', None)
@@ -21,7 +25,7 @@ print("\n******** Started ********* : ", datetime.datetime.now())
 userdata = auth.get_userdata()
 kite = KiteConnect(api_key=userdata['api_key'])
 kite.set_access_token(userdata['access_token'])
-    
+
 print("******** UserData Loaded ********* : ", datetime.datetime.now())
 
 #list all tickers you want to trade
@@ -39,23 +43,45 @@ tokenlist = [738561]
 
 def compute_data(token):
     global one_hour_rsi
+    global one_hour_mfi
     #enddate = datetime.datetime(2020, 5, 4, 15,30,0,0)
     enddate = datetime.datetime.today()
-    startdate = enddate - datetime.timedelta(15)
+    startdate = enddate - datetime.timedelta(15) #12
     try:
         df = historical_data.get(kite, token, startdate, enddate, candlesize)
         df = EMA.calc(df,'close','ema_5',5)
         df = EMA.calc(df,'close','ema_20',20)
         df = MACD.calc(df)
-        df = MFI.calc(df)
         df = VWAP.calc(df)
-        rsi = historical_data.get(kite, token, startdate, enddate, "60minute")
-        rsi = RSI.calc(rsi)
-        one_hour_rsi = rsi.RSI_14.values[-2]
+        df = RSI.calc(df)
+        df = MFI.calc(df)
+
+        hour_data = historical_data.get(kite, token, startdate, enddate, "60minute")
+        hour_data = RSI.calc(hour_data)
+        hour_data = MFI.calc(hour_data)
+        one_hour_rsi = hour_data.RSI_14.values[-2]
+        one_hour_mfi = hour_data.mfi.values[-2]
+        hour_data.drop(['RSI_14', 'mfi'], inplace=True, axis=1)
+
     except Exception as e:
         print("******* ERROR Computing Historical Data ********", token, e)
     return df
 
+
+def exit_data(token):
+    #enddate = datetime.datetime(2020, 5, 4, 15,30,0,0)
+    enddate = datetime.datetime.today()
+    startdate = enddate - datetime.timedelta(15) #12
+    try:
+        df = historical_data.get(kite, token, startdate, enddate, candlesize)
+        df = MACD.calc(df)
+        df = MFI.calc(df)
+
+    except Exception as e:
+        print("******* ERROR Computing Historical Data ********", token, e)
+    return df
+	
+	
 def check_volume(open, volume):
     if open <= 400 and volume >= 1000000:
         return True
@@ -71,7 +97,10 @@ def check_volume(open, volume):
 
 def run_strategy():
     global orderslist
+    global mfilist
+    global trailing_sl
     global one_hour_rsi
+    global one_hour_mfi
     for i in range(0, len(tickerlist)):
 
         if (tickerlist[i] in orderslist):
@@ -88,32 +117,34 @@ def run_strategy():
             macd = histdata.hist_12_26_9.values[-2]
             mfi = histdata.mfi.values[-2]
             vwap = histdata.vwap.values[-2]
+			rsi = histdata.RSI_14.values[-2]
 
             open = histdata.open.values[-2]
             close = histdata.close.values[-2]
             high = histdata.high.values[-2]
             low = histdata.low.values[-2]
-            
+
             volume = histdata.volume.values[-2]
             has_volume = check_volume(histdata.open.values[-2], volume)
 
             perc_change = ((close - pre_close) * 100) / open
 
             #print("-----------------------------------------------------------------------------------------")
-            print(tickerlist[i],open,close,"::::",round(ema5,2),round(ema20,2),round(macd,4),int(mfi),int(one_hour_rsi),round(vwap,2),round(perc_change,2),volume)
+            print(tickerlist[i],open,close,"::::",round(ema5,2),round(ema20,2),round(macd,4),int(mfi),int(rsi),\
+                int(one_hour_mfi),int(one_hour_rsi),round(vwap,2),round(perc_change,2),volume)
 
-            if (ema5 > ema20) and (pre_ema5 < pre_ema20) and (macd > 0) and (close > vwap):
-                if not has_volume:
-                    print("Sorry, Volume is low")
-                    #continue
-                
+            if (ema5 > ema20) and (pre_ema5 < pre_ema20) and (macd > 0) and (close > vwap) and \
+                            (one_hour_mfi > 40) and (one_hour_mfi < 70) and (one_hour_rsi > 40) and (mfi < 70):
                 if abs(perc_change) > 4:
                     print("Ignoring spike")
                     continue
 
                 quantity = round(max(1, (2500/high)))
+                quantity = int(quantity)
 
-                #orderslist[tickerlist[i]] = close
+                orderslist[tickerlist[i]] = close
+                mfilist[tickerlist[i]] = mfi
+                trailing_sl[tickerlist[i]] = 0
 
                 order = kite.place_order(exchange='NSE',
                                              tradingsymbol=tickerlist[i],
@@ -124,10 +155,11 @@ def run_strategy():
                                              validity='DAY',
                                              variety="regular"
                                              )
-                
-                print("         Order : ","BUY",tickerlist[i],"quantity:",quantity,"price:",close,"rsi_1hour:",one_hour_rsi,"volume:",volume,datetime.datetime.now())
 
-            if (ema5 < ema20) and (pre_ema5 > pre_ema20) and (macd < 0) and (close < vwap):
+                print("         Order : ","BUY",tickerlist[i],"quantity:",quantity,"macd",round(macd,4),"mfi:",round(mfi,2),"rsi:",round(rsi,2),\
+                    "mfi_1hour:",round(one_hour_mfi,2),"rsi_1hour:",round(one_hour_rsi,2),"volume:",volume,datetime.datetime.now())
+
+            if (ema5 < ema20) and (pre_ema5 > pre_ema20) and (macd < 0) and (close < vwap) and (one_hour_mfi > 30) and (one_hour_mfi < 60) and (one_hour_rsi < 60):
                 if not has_volume:
                     print("Sorry, Volume is low")
                     #continue
@@ -137,8 +169,11 @@ def run_strategy():
                     continue
 
                 quantity = round(max(1, (2500/high)))
+                quantity = int(quantity)
 
-                #orderslist[tickerlist[i]] = close
+                orderslist[tickerlist[i]] = close
+                mfilist[tickerlist[i]] = mfi
+                trailing_sl[tickerlist[i]] = 0
 
                 order = kite.place_order(exchange='NSE',
                                              tradingsymbol=tickerlist[i],
@@ -149,56 +184,240 @@ def run_strategy():
                                              validity='DAY',
                                              variety="regular"
                                              )
-                
-                print("         Order : ","SELL",tickerlist[i],"quantity:",quantity,"price:",close,"rsi_1hour:",one_hour_rsi,"volume:",volume,datetime.datetime.now())
+
+                print("         Order : ","SELL",tickerlist[i],"quantity:",quantity,"macd",round(macd,4),"mfi:",round(mfi,2),"rsi:",round(rsi,2),\
+                    "mfi_1hour:",round(one_hour_mfi,2),"rsi_1hour:",round(one_hour_rsi,2),"volume:",volume,datetime.datetime.now())
 
         except Exception as e :
             print(e)
 
-def check_order_status1():
-    global orderslist
-    df = pd.DataFrame(columns=['order_id', 'status', 'tradingsymbol', 'instrument_token', 'transaction_type', 'quantity'])
-    try:
-        data = kite.orders()
-        df = pd.DataFrame.from_dict(data, orient='columns', dtype=None)
-        #print(df)
-        if not df.empty:
-            df = df[['order_id', 'status', 'tradingsymbol', 'instrument_token', 'transaction_type', 'quantity']]
-    except Exception as e:
-        print("******* ERROR Fetching Historical Data ********", e)
-    for ind in df.index:
-        token = df['tradingsymbol'][ind]
-        if token in orderslist:
-            orderslist.pop(token) 
+
+def check_perc(tradingsymbol, average_price, last_price):
+    global trailing_sl
+    global reason
+    exit_con = 0
+    perc = (abs(average_price - last_price )*100) / average_price
+    if perc > 2.05:
+        trailing_sl[tradingsymbol] = 2
+    elif perc > 1.55:
+        trailing_sl[tradingsymbol] = 1.5
+    elif perc > 1.05:
+        trailing_sl[tradingsymbol] = 1
+    elif perc > 0.55:
+        trailing_sl[tradingsymbol] = 0.5
+    else :
+        trailing_sl[tradingsymbol] = 0
+
+    if trailing_sl[tradingsymbol] == 2:
+        if perc < 1.95:
+            exit_con = 1
+            reason = "immediate. Percentage Exit 2%"
+
+    if trailing_sl[tradingsymbol] == 1.5:
+        if perc < 1.45:
+            exit_con = 1
+            reason = "immediate. Percentage Exit 1.5%"
+
+    if trailing_sl[tradingsymbol] == 1:
+        if perc < 0.95:
+            exit_con = 1
+            reason = "immediate. Percentage Exit 1%"
+
+    if trailing_sl[tradingsymbol] == 0.5:
+        if perc < 0.5:
+            exit_con = 1
+            reason = "immediate. Percentage Exit 0.5%"
+    return exit_con
+	
+
+def exit_buy(data, idx, immediate, force):
+    #tradingsymbol  instrument_token  quantity  average_price  last_price
+    #print(data)
+    global trailing_sl
+    global reason
+    token = data['instrument_token'][idx]
+    average_price = data['average_price'][idx]
+    last_price = data['last_price'][idx]
+    tradingsymbol = data['tradingsymbol'][idx]
+    quantity = data['quantity'][idx]
+
+    if force:
+        reason = "Time up"
+
+    if average_price <=0:
+        return
+
+
+    exit_con = 0
+
+    if immediate:
+        exit_con = check_perc(tradingsymbol, average_price, last_price)
+
+    else :
+        histdata = exit_data(token)
+        if tradingsymbol not in mfilist:
+            mfilist[tradingsymbol] = histdata.mfi.values[-2]
+
         else:
-            orderslist[token] = "0"
-        #print(df['tradingsymbol'][ind], df['transaction_type'][ind]) 
+            if mfilist[tradingsymbol] < histdata.mfi.values[-2]:
+                mfilist[tradingsymbol] = histdata.mfi.values[-2]
 
-    print(orderslist)
-    return df
+        print(tradingsymbol,last_price,histdata.hist_12_26_9.values[-2],mfilist[tradingsymbol],histdata.mfi.values[-2],trailing_sl[tradingsymbol])
+
+        exit_con = check_perc(tradingsymbol, average_price, last_price)
+
+        if histdata.hist_12_26_9.values[-2] < 0:
+            exit_con = 1
+            reason = "macd change"
+
+        elif mfilist[tradingsymbol] > 79:
+            if histdata.mfi.values[-2] < 69:
+                exit_con = 1
+                reason = "mfi change"
+
+    if exit_con == 1 or force:
+        order = kite.place_order(exchange='NSE',
+                                             tradingsymbol=tradingsymbol,
+                                             transaction_type="SELL",
+                                             quantity=quantity,
+                                             product='MIS',
+                                             order_type='MARKET',
+                                             validity='DAY',
+                                             variety="regular"
+                                             )
+
+        print("         Exit : ","SELL",tradingsymbol,"price:",last_price,reason,datetime.datetime.now())
+        if tradingsymbol in orderslist:
+            del orderslist[tradingsymbol]
+        if tradingsymbol in mfilist:
+            del mfilist[tradingsymbol]
+        if tradingsymbol in trailing_sl:
+            del trailing_sl[tradingsymbol]
 
 
-def check_order_status():
+def exit_sell(data,idx, immediate, force):
+    #tradingsymbol  instrument_token  quantity  average_price  last_price
+    #print(data)
+    global trailing_sl
+    global reason
+    token = data['instrument_token'][idx]
+    average_price = data['average_price'][idx]
+    last_price = data['last_price'][idx]
+    tradingsymbol = data['tradingsymbol'][idx]
+    quantity = abs(data['quantity'][idx])
+
+    if force:
+        reason = "Time up"
+
+    if average_price <=0:
+        return
+
+
+    exit_con = 0
+
+
+    if immediate:
+        exit_con = check_perc(tradingsymbol, average_price, last_price)
+
+    else :
+        histdata = exit_data(token)
+        if tradingsymbol not in mfilist:
+            mfilist[tradingsymbol] = histdata.mfi.values[-2]
+
+        else:
+            if mfilist[tradingsymbol] > histdata.mfi.values[-2]:
+                mfilist[tradingsymbol] = histdata.mfi.values[-2]
+
+        print(tradingsymbol,last_price,histdata.hist_12_26_9.values[-2],mfilist[tradingsymbol],histdata.mfi.values[-2],trailing_sl[tradingsymbol])
+
+        exit_con = check_perc(tradingsymbol,average_price, last_price)
+
+        if histdata.hist_12_26_9.values[-2] > 0:
+            exit_con = 1
+            reason = "macd change"
+
+        elif mfilist[tradingsymbol] < 21:
+            if histdata.mfi.values[-2] > 31:
+                exit_con = 1
+                reason = "mfi condition"
+
+    if exit_con == 1 or force:
+        order = kite.place_order(exchange='NSE',
+                                             tradingsymbol=tradingsymbol,
+                                             transaction_type="BUY",
+                                             quantity=quantity,
+                                             product='MIS',
+                                             order_type='MARKET',
+                                             validity='DAY',
+                                             variety="regular"
+                                             )
+
+        print("         Exit : ","BUY",tradingsymbol,"price:",last_price,reason,datetime.datetime.now())
+        if tradingsymbol in orderslist:
+            del orderslist[tradingsymbol]
+        if tradingsymbol in mfilist:
+            del mfilist[tradingsymbol]
+        if tradingsymbol in trailing_sl:
+            del trailing_sl[tradingsymbol]
+		
+
+		
+def check_order_status(immediate=False, force=False):
     global orderslist
-    df = pd.DataFrame(columns=['order_id', 'status', 'tradingsymbol', 'instrument_token', 'transaction_type', 'quantity'])
+    global mfilist
+    global trailing_sl
+    #print(kite.positions()['day'])
+    #orderslist.clear()
+
+    df = pd.DataFrame(columns=['tradingsymbol', 'instrument_token', 'quantity', 'average_price', 'last_price'])
     try:
-        data = kite.orders()
+        data = kite.positions()['day']
         df = pd.DataFrame.from_dict(data, orient='columns', dtype=None)
-        #print(df)
         if not df.empty:
-            df = df[['order_id', 'status', 'tradingsymbol', 'instrument_token', 'transaction_type', 'quantity']]
+            df = df[['tradingsymbol', 'instrument_token', 'quantity', 'average_price', 'last_price']]
+            for idx in df.index:
+                if not df['tradingsymbol'][idx] in tickerlist:
+                    #print("Not applicable :", df['tradingsymbol'][idx])
+                    continue
+
+                if df['quantity'][idx] == 0:
+                    #df.drop([idx], inplace = True)
+                    if df['tradingsymbol'][idx] in orderslist:
+                        del orderslist[df['tradingsymbol'][idx]]
+
+                    if df['tradingsymbol'][idx] in mfilist:
+                        del mfilist[df['tradingsymbol'][idx]]
+
+                    if df['tradingsymbol'][idx] in trailing_sl:
+                        del trailing_sl[df['tradingsymbol'][idx]]
+
+                elif df['quantity'][idx] > 0:
+                    if not df['tradingsymbol'][idx] in orderslist:
+                        print("orderlist empty. Suspicious")
+                        orderslist[df['tradingsymbol'][idx]] = df['average_price'][idx]
+
+                    exit_buy(df.iloc[[idx]], idx,immediate,force)
+                elif df['quantity'][idx] < 0:
+                    if not df['tradingsymbol'][idx] in orderslist:
+                        print("orderlist empty. Suspicious")
+                        orderslist[df['tradingsymbol'][idx]] = df['average_price'][idx]
+
+                    exit_sell(df.iloc[[idx]],idx,immediate,force)
+                #print(df['tradingsymbol'][idx], df['transaction_type'][idx])
     except Exception as e:
-        print("******* ERROR Fetching Orders Data ********", e)
+        print("******* ERROR Check order ********", e)
 
-    for ind in df.index:
-        status = df['status'][ind]
-        if status == "OPEN":
-            token = df['tradingsymbol'][ind]
-            orderslist[token] = 0
-        #print(df['tradingsymbol'][ind], df['transaction_type'][ind]) 
+    #print(df.iloc[[3]])
 
-    print(orderslist)
+
+    #print(orderslist)
+    if not immediate:
+        print(df)
+        print(orderslist)
+        print(mfilist)
+        print(trailing_sl)
     return df
+
 
 def run():
     global run_count
@@ -263,5 +482,5 @@ def run():
 
 run_count = 0
 
-run1()
+run()
 
