@@ -9,7 +9,7 @@ import math
 logging.basicConfig(level=logging.INFO)
 
 cur_dir_path = os.path.dirname(os.path.abspath(sys.argv[0]))
-data_path = os.path.join(cur_dir_path, 'data')
+data_path = os.path.join(cur_dir_path, '../data')
 userdata_file = os.path.join(data_path, 'userdata.csv')
 
 def get_user_data(userdata):

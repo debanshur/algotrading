@@ -1,5 +1,8 @@
 import logging
 from kiteconnect import KiteConnect
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from modules import auth
 
 logging.basicConfig(level=logging.INFO)
@@ -26,6 +29,7 @@ except Exception as e:
     logging.info("Order placement failed: {}".format(e.message))
 
 # Fetch all orders
-orders = kite.orders()
-print(orders)
+if __name__ == '__main__':
+    orders = kite.orders()
+    print(orders)
 

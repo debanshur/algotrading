@@ -12,3 +12,12 @@ data/
 
 # Vscode
 .vscode
+
+# IDE and configuration files
+.context/
+.cursorrules
+.idea/
+context.yaml
+
+# API credentials
+data/userdata.csv

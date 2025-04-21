@@ -2,8 +2,6 @@
 import datetime
 from kiteconnect import KiteConnect
 from modules import auth
-from modules import historical_data
-import pandas as pd
 
 """
 1. Login to kite
@@ -88,7 +86,7 @@ def strategy(records, token):
     print("Gross Profit",profit,"\n\n")
     #Place the last order
     #print(last_order_placed)
-    #place_order(last_order_placed, token)
+    place_order(last_order_placed, token)
 
 
 #Place an order based on the transaction type(BUY/SELL)

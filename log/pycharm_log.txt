@@ -1,0 +1,9 @@
+105
+****** Waiting ******** 2022-08-02 01:42:41.540635
+****** Waiting ******** 2022-08-02 01:42:42.545671
+Traceback (most recent call last):
+  File "/Users/debanshu.rout/repo/external/algotrading/fyers_integration/strategy.py", line 274, in <module>
+    run()
+  File "/Users/debanshu.rout/repo/external/algotrading/fyers_integration/strategy.py", line 270, in run
+    time.sleep(1)
+KeyboardInterrupt
