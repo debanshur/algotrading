@@ -35,7 +35,7 @@ service-identity==21.1.0
 six==1.16.0
 Twisted==20.3.0
 typing==3.10.0.0
-urllib3==1.26.15
+urllib3==2.5.0
 websocket-client==0.59.0
 zope.interface==5.5.2
 kiteconnect==4.2.0
