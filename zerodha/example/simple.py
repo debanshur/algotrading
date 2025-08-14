@@ -15,11 +15,11 @@ kite.set_access_token(userdata['access_token'])
 
 try:
     order_id = kite.place_order(
-        variety=kite.VARIETY_AMO,
+        variety=kite.VARIETY_REGULAR,
         exchange=kite.EXCHANGE_NSE,
         tradingsymbol="SBIN",
         transaction_type=kite.TRANSACTION_TYPE_BUY,
-        quantity=10,
+        quantity=1,
         product=kite.PRODUCT_CNC,
         order_type=kite.ORDER_TYPE_MARKET
     )
