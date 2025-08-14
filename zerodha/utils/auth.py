@@ -12,7 +12,7 @@ module_dir = os.path.dirname(os.path.abspath(__file__))
 # Go up one level to get the zerodha directory
 zerodha_dir = os.path.dirname(module_dir)
 # Set the data path relative to the zerodha directory
-data_path = os.path.join(zerodha_dir, '../data')
+data_path = os.path.join(zerodha_dir, 'data')
 userdata_file = os.path.join(data_path, 'userdata.csv')
 
 
