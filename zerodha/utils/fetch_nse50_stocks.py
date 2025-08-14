@@ -1,10 +1,12 @@
-import logging, requests
-from kiteconnect import KiteConnect
-import sys
-import pandas as pd
 import os
+import sys
+
+import pandas as pd
+import requests
+from kiteconnect import KiteConnect
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from modules import auth
+from utils import auth
 
 userdata = auth.get_userdata()
 kite = KiteConnect(api_key=userdata['api_key'])
@@ -24,11 +26,13 @@ def fetch_nifty50_symbols():
     # Keep NSE order
     return [item["symbol"] for item in data]
 
+
 # Step 2: Load Zerodha instrument list from URL
 def load_instruments_from_url():
     instruments_url = "https://api.kite.trade/instruments"
     df = pd.read_csv(instruments_url)
     return df
+
 
 # Step 3: Match NIFTY 50 symbols to tokens in the same order
 def match_tokens_in_order(nifty_symbols, instruments_df):
@@ -44,8 +48,6 @@ def match_tokens_in_order(nifty_symbols, instruments_df):
             tickerlist.append(sym)
             tokenlist.append(None)  # If token not found
     return tickerlist, tokenlist
-
-
 
 
 if __name__ == "__main__":
@@ -77,4 +79,3 @@ if __name__ == "__main__":
     # Step 4: Output
     print("tickerlist =", low_price_tickers)
     print("tokenlist  =", low_price_tokens)
-

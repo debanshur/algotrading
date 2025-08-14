@@ -9,8 +9,8 @@ from kiteconnect import KiteConnect
 # Add parent directory to Python path to access indicators module
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from modules import auth
-from modules import historical_data
+from utils import auth
+from utils import historical_data
 from indicators import MACD, RSI, EMA, MFI, VWAP
 
 max_amount_per_scrip = 2500
@@ -42,7 +42,6 @@ print("******** UserData Loaded ********* : ", datetime.datetime.now())
 tickerlist = ["RELIANCE"]
 tokenlist = [738561]
 
-
 # F&O nse 100
 # tickerlist = ['BAJAJFINSV', 'BRITANNIA', 'ULTRACEMCO', 'BAJFINANCE', 'SRF', 'DRREDDY', 'BAJAJ-AUTO', 'NAUKRI', 'HINDUNILVR', 'ASIANPAINT', 'HDFC', 'HEROMOTOCO', 'TCS', 'NIITTECH', 'DIVISLAB', 'KOTAKBANK', 'PVR', 'TORNTPHARM', 'APOLLOHOSP', 'ACC', 'INDIGO', 'RELIANCE', 'JUBLFOOD', 'PIDILITIND', 'BATAINDIA', 'HDFCBANK', 'PEL', 'LT', 'SIEMENS', 'MGL', 'GODREJPROP', 'SRTRANSFIN', 'COLPAL', 'UBL', 'MUTHOOTFIN', 'TITAN', 'SBILIFE', 'MINDTREE', 'BALKRISIND', 'INDUSINDBK', 'LUPIN', 'RAMCOCEM', 'GRASIM', 'GODREJCP', 'AMARAJABAT', 'HAVELLS', 'VOLTAS', 'BERGEPAINT', 'ESCORTS', 'HDFCLIFE', 'INFY', 'TECHM', 'CUMMINSIND', 'AXISBANK', 'DABUR', 'MCDOWELL-N', 'CIPLA', 'MFSL', 'AUROPHARMA', 'UPL', 'ICICIBANK', 'IGL', 'CENTURYTEX', 'HCLTECH', 'SUNPHARMA', 'JUSTDIAL', 'M&M', 'TVSMOTOR', 'BHARATFORG', 'ICICIPRULI', 'SUNTV', 'CONCOR', 'TATASTEEL', 'BPCL', 'BANDHANBNK', 'BHARTIARTL', 'LICHSGFIN', 'MARICO', 'TATACHEM', 'M&MFIN', 'CADILAHC', 'UJJIVAN', 'BIOCON', 'GLENMARK', 'ADANIPORTS', 'CHOLAFIN', 'RBLBANK', 'HINDPETRO', 'JSWSTEEL', 'TATACONSUM', 'INFRATEL', 'AMBUJACEM', 'PETRONET', 'SBIN', 'TORNTPOWER', 'ZEEL', 'IBULHSGFIN', 'WIPRO', 'ITC', 'DLF']
 # tokenlist = [4268801, 140033, 2952193, 81153, 837889, 225537, 4267265, 3520257, 356865, 60417, 340481, 345089, 2953217, 2955009, 2800641, 492033, 3365633, 900609, 40193, 5633, 2865921, 738561, 4632577, 681985, 94977, 341249, 617473, 2939649, 806401, 4488705, 4576001, 1102337, 3876097, 4278529, 6054401, 897537, 5582849, 3675137, 85761, 1346049, 2672641, 523009, 315393, 2585345, 25601, 2513665, 951809, 103425, 245249, 119553, 408065, 3465729, 486657, 1510401, 197633, 2674433, 177665, 548353, 70401, 2889473, 1270529, 2883073, 160001, 1850625, 857857, 7670273, 519937, 2170625, 108033, 4774913, 3431425, 1215745, 895745, 134657, 579329, 2714625, 511233, 1041153, 871681, 3400961, 2029825, 4369665, 2911489, 1895937, 3861249, 175361, 4708097, 359937, 3001089, 878593, 7458561, 325121, 2905857, 779521, 3529217, 975873, 7712001, 969473, 424961, 3771393]
@@ -53,12 +52,18 @@ tokenlist = [738561]
 
 
 # nifty50 < 3500
-tickerlist = ['WIPRO', 'INFY', 'ETERNAL', 'HDFCLIFE', 'BAJAJFINSV', 'TITAN', 'ASIANPAINT', 'SBIN', 'HDFCBANK', 'ICICIBANK', 'ADANIENT', 'BHARTIARTL', 'DRREDDY', 'AXISBANK', 'POWERGRID', 'SBILIFE', 'CIPLA', 'GRASIM', 'M&M', 'SUNPHARMA', 'RELIANCE', 'TATAMOTORS', 'BAJFINANCE', 'HCLTECH', 'TCS', 'NTPC', 'KOTAKBANK', 'INDUSINDBK', 'COALINDIA', 'ITC', 'HINDUNILVR', 'ONGC', 'TATACONSUM', 'JIOFIN', 'SHRIRAMFIN', 'BEL', 'NESTLEIND', 'JSWSTEEL', 'TECHM', 'HINDALCO', 'ADANIPORTS', 'TATASTEEL']
-tokenlist  = [969473, 408065, 1304833, 119553, 4268801, 897537, 60417, 779521, 341249, 1270529, 6401, 2714625, 225537, 1510401, 3834113, 5582849, 177665, 315393, 519937, 857857, 738561, 884737, 81153, 1850625, 2953217, 2977281, 492033, 1346049, 5215745, 424961, 356865, 633601, 878593, 4644609, 1102337, 98049, 4598529, 3001089, 3465729, 348929, 3861249, 895745]
-
-
+tickerlist = ['WIPRO', 'INFY', 'ETERNAL', 'HDFCLIFE', 'BAJAJFINSV', 'TITAN', 'ASIANPAINT', 'SBIN', 'HDFCBANK',
+              'ICICIBANK', 'ADANIENT', 'BHARTIARTL', 'DRREDDY', 'AXISBANK', 'POWERGRID', 'SBILIFE', 'CIPLA', 'GRASIM',
+              'M&M', 'SUNPHARMA', 'RELIANCE', 'TATAMOTORS', 'BAJFINANCE', 'HCLTECH', 'TCS', 'NTPC', 'KOTAKBANK',
+              'INDUSINDBK', 'COALINDIA', 'ITC', 'HINDUNILVR', 'ONGC', 'TATACONSUM', 'JIOFIN', 'SHRIRAMFIN', 'BEL',
+              'NESTLEIND', 'JSWSTEEL', 'TECHM', 'HINDALCO', 'ADANIPORTS', 'TATASTEEL']
+tokenlist = [969473, 408065, 1304833, 119553, 4268801, 897537, 60417, 779521, 341249, 1270529, 6401, 2714625, 225537,
+             1510401, 3834113, 5582849, 177665, 315393, 519937, 857857, 738561, 884737, 81153, 1850625, 2953217,
+             2977281, 492033, 1346049, 5215745, 424961, 356865, 633601, 878593, 4644609, 1102337, 98049, 4598529,
+             3001089, 3465729, 348929, 3861249, 895745]
 
 blacklist = ['SBIN', 'BAJAJ-AUTO']
+
 
 def compute_data(token):
     global one_hour_rsi
@@ -128,7 +133,7 @@ def run_strategy():
             continue
         try:
             histdata = compute_data(tokenlist[i])
-            #print(histdata)
+            # print(histdata)
             pre_ema5 = histdata.ema_5.values[-3]
             pre_ema20 = histdata.ema_20.values[-3]
             pre_close = histdata.close.values[-3]
@@ -456,8 +461,7 @@ def run():
 
     next_time = start_time
 
-
-    #calculates next run time. Since we are running it on 10 min candle,
+    # calculates next run time. Since we are running it on 10 min candle,
     # from 9:15, candles will start to form every 15..25..35
 
     if (datetime.datetime.now().minute + (5 - (datetime.datetime.now().minute % 5))) % 10 == 0:
@@ -520,9 +524,9 @@ def run():
             print('****** Waiting for start time ********', datetime.datetime.now())
             time.sleep(5)
 
-# run1()
-#run()
 
+# run1()
+# run()
 
 
 if __name__ == '__main__':

@@ -1,9 +1,9 @@
-from kiteconnect import KiteConnect
-import pandas as pd
-import os
-import sys
 import datetime
 import logging
+import os
+
+import pandas as pd
+from kiteconnect import KiteConnect
 
 logging.basicConfig(level=logging.INFO)
 
@@ -15,6 +15,7 @@ zerodha_dir = os.path.dirname(module_dir)
 data_path = os.path.join(zerodha_dir, '../data')
 userdata_file = os.path.join(data_path, 'userdata.csv')
 
+
 def is_valid_token(api_key, access_token):
     try:
         kite = KiteConnect(api_key=api_key)
@@ -23,6 +24,7 @@ def is_valid_token(api_key, access_token):
         return True
     except Exception:
         return False
+
 
 def get_userdata():
     try:
@@ -34,7 +36,7 @@ def get_userdata():
             public_token = userdata.loc[0, 'public_token']
             if is_valid_token(api_key, access_token):
                 data = ({"api_key": api_key, "access_token": access_token, \
-                    "user_id": user_id, "public_token": public_token}) 
+                         "user_id": user_id, "public_token": public_token})
                 return data
 
         raise Exception("** Run setup.py")

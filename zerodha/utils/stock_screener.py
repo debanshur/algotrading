@@ -1,6 +1,12 @@
-from kiteconnect import KiteConnect
-from modules import auth
+import os
+import sys
+
 import pandas as pd
+from kiteconnect import KiteConnect
+
+# Add parent directory to Python path to access utils module
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils import auth
 
 userdata = auth.get_userdata()
 kite = KiteConnect(api_key=userdata['api_key'])
@@ -8,13 +14,14 @@ kite.set_access_token(userdata['access_token'])
 
 dict = {}
 
+
 def get_all_nse_instruments():
     data = kite.instruments(exchange="NSE")
 
-    df = pd.DataFrame(columns=[ 'instrument_token','tradingsymbol','name'])
+    df = pd.DataFrame(columns=['instrument_token', 'tradingsymbol', 'name'])
     df = pd.DataFrame.from_dict(data, orient='columns', dtype=None)
     if not df.empty:
-        df = df[['instrument_token','tradingsymbol','name']]
+        df = df[['instrument_token', 'tradingsymbol', 'name']]
 
     for ind in df.index:
         tokenName = df['tradingsymbol'][ind]
@@ -39,8 +46,8 @@ def get_custom_instruments(stocks_list):
             tokenNameList.append(tokenName)
             tokenNumberList.append(dict[tokenName])
 
-    print("\nToken Name : \n",tokenNameList)
-    print("\nToken Number : \n",tokenNumberList)
+    print("\nToken Name : \n", tokenNameList)
+    print("\nToken Number : \n", tokenNumberList)
 
 
 stocks_list = pd.read_csv("data.csv")
