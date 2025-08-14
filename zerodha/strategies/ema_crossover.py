@@ -6,11 +6,11 @@ import time
 import pandas as pd
 from kiteconnect import KiteConnect
 
-# Add parent directory to Python path to access indicators module
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add root directory to Python path to access indicators module
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from utils import auth
-from utils import historical_data
+from zerodha.utils import auth
+from zerodha.utils import historical_data
 from indicators import MACD, RSI, EMA, MFI, VWAP
 
 max_amount_per_scrip = 2500
