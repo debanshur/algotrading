@@ -40,3 +40,7 @@ context.yaml
 
 # API credentials
 data/userdata.csv
+
+# Log
+log/
+.DS_Store

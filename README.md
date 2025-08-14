@@ -56,6 +56,7 @@ algotrading/
 ## 💻 Usage
 
 ### Running a Strategy
+
 ```python
 from zerodha import setup
 from indicators import RSI, MACD
@@ -64,14 +65,17 @@ from indicators import RSI, MACD
 trading_setup = setup.initialize()
 
 # Example: EMA Crossover Strategy
-from zerodha.ema_crossover import EMACrossover
+from zerodha.strategies.ema_crossover import EMACrossover
+
 strategy = EMACrossover()
 strategy.run()
 ```
 
 ### Backtesting
+
 ```python
-from zerodha import backtest
+
+from zerodha.strategies import backtest
 
 # Run backtest on historical data
 backtest.run(strategy, start_date='2023-01-01', end_date='2023-12-31')
