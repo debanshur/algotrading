@@ -15,7 +15,8 @@ kite.set_access_token(userdata['access_token'])
 
 try:
     order_id = kite.place_order(
-        variety=kite.VARIETY_REGULAR,
+        variety=kite.VARIETY_AMO,
+        #variety=kite.VARIETY_REGULAR,
         exchange=kite.EXCHANGE_NSE,
         tradingsymbol="SBIN",
         transaction_type=kite.TRANSACTION_TYPE_BUY,
