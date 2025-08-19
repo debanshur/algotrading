@@ -21,6 +21,9 @@ candlesize = '10minute'
 one_hour_rsi = 50
 orderslist = {}
 
+
+#supertrend settings - 10/1, 12/3, 11/2
+
 # pd.set_option('display.max_columns',50)
 pd.set_option('display.max_rows', None)
 print("\n******** Started ********* : ", datetime.datetime.now())

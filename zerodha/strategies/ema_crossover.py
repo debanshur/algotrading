@@ -11,9 +11,10 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 
 from zerodha.utils import auth
 from zerodha.utils import historical_data
+
 from indicators import MACD, RSI, EMA, MFI, VWAP
 
-max_amount_per_scrip = 2500
+max_amount_per_scrip = 3500
 candlesize = '10minute'
 orderslist = {}
 mfilist = {}
@@ -62,7 +63,7 @@ tokenlist = [969473, 408065, 1304833, 119553, 4268801, 897537, 60417, 779521, 34
              2977281, 492033, 1346049, 5215745, 424961, 356865, 633601, 878593, 4644609, 1102337, 98049, 4598529,
              3001089, 3465729, 348929, 3861249, 895745]
 
-blacklist = ['SBIN', 'BAJAJ-AUTO']
+blacklist = []
 
 
 def compute_data(token):
@@ -157,8 +158,7 @@ def run_strategy():
 
             # print("-----------------------------------------------------------------------------------------")
             print(tickerlist[i], open, close, "::::", round(ema5, 2), round(ema20, 2), round(macd, 4), int(mfi),
-                  int(rsi), \
-                  int(one_hour_mfi), int(one_hour_rsi), round(vwap, 2), round(perc_change, 2), volume)
+                  int(rsi), int(one_hour_mfi), int(one_hour_rsi), round(vwap, 2), round(perc_change, 2), volume)
 
             if (ema5 > ema20) and (pre_ema5 < pre_ema20) and (macd > 0) and (close > vwap) and \
                     (one_hour_mfi > 40) and (one_hour_mfi < 70) and (one_hour_rsi > 40) and (mfi < 70):
@@ -393,6 +393,7 @@ def exit_sell(data, idx, immediate, force):
 
 
 def check_order_status(immediate=False, force=False):
+    print("***** Checking Order Status : immediate : {}, force : {}".format(immediate, force))
     global orderslist
     global mfilist
     global trailing_sl
@@ -440,6 +441,7 @@ def check_order_status(immediate=False, force=False):
                 # print(df['tradingsymbol'][idx], df['transaction_type'][idx])
     except Exception as e:
         print("******* ERROR Check order ********", e)
+        return None
 
     # print(df.iloc[[3]])
 
@@ -455,9 +457,9 @@ def check_order_status(immediate=False, force=False):
 def run():
     global run_count
     global exitcount
-    start_time = int(11) * 60 + int(1)  # specify in int (hr) and int (min) format
+    start_time = int(10) * 60 + int(55)  # specify in int (hr) and int (min) format
     end_time = int(14) * 60 + int(55)  # do not place fresh order
-    square_time = int(15) * 60 + int(5)  # square off all open positions
+    square_time = int(15) * 60 + int(10)  # square off all open positions
 
     next_time = start_time
 
@@ -478,6 +480,7 @@ def run():
     exit_time = datetime.datetime.now().hour * 60 + \
                 (datetime.datetime.now().minute + (5 - (datetime.datetime.now().minute % 5)))
     # runcount = 0
+    print("***** Checking Order Status : Before Loop *****")
     check_order_status()
     while True:
         check_order_status(immediate=True)
@@ -494,7 +497,8 @@ def run():
                 print("\n\n {} Exit Count : Time - {} ".format(exitcount, datetime.datetime.now()))
                 if exitcount >= 0:
                     try:
-                        check_order_status()
+                        print("***** Checking Order Status : exitcount *****")
+                        status = check_order_status()
                     except Exception as e:
                         print("******* Run Error *********", e)
                 exitcount = exitcount + 1
@@ -518,15 +522,32 @@ def run():
                 time_remaining_minutes = next_time - current_time_minutes
                 print('******  Time Remaining ********', time_remaining_minutes, 'minutes')
                 print('--------------------------------------------------------------------------------------')
-                time.sleep(60)
+                # time.sleep(60)
+
+                # --- Sleep logic ---
+                now = datetime.datetime.now()
+                # Compute seconds until next minute’s :05
+                sleep_seconds = (60 - now.second) + 5
+                if now.second < 5:
+                    # Already before :05 → just wait until this minute’s :05
+                    sleep_seconds = 5 - now.second
+
+                time.sleep(sleep_seconds)
 
         else:
+            start_time = int(10) * 60 + int(55)
             print('****** Waiting for start time ********', datetime.datetime.now())
-            time.sleep(5)
+            # time.sleep(5)
+            now = datetime.datetime.now()
+            current_minutes = now.hour * 60 + now.minute
 
+            # Calculate how many seconds to wait
+            wait_minutes = start_time - current_minutes
+            wait_seconds = wait_minutes * 60 - now.second  # subtract current seconds offset
 
-# run1()
-# run()
+            if wait_seconds > 0:
+                print(f"****** Waiting for start time ******** {now} (sleeping {wait_seconds} seconds)")
+                time.sleep(wait_seconds)
 
 
 if __name__ == '__main__':
