@@ -499,6 +499,9 @@ def run():
                     try:
                         print("***** Checking Order Status : exitcount *****")
                         status = check_order_status()
+                        while status is None:
+                            print("***** Retry Checking Order Status : exitcount *****")
+                            status = check_order_status()
                     except Exception as e:
                         print("******* Run Error *********", e)
                 exitcount = exitcount + 1
@@ -517,6 +520,7 @@ def run():
             else:
                 if datetime.datetime.now().hour * 60 + datetime.datetime.now().minute >= end_time:
                     print('******  New Trade window closed ********', datetime.datetime.now())
+
                 print('******  Waiting for next time ********', datetime.datetime.now())
                 current_time_minutes = datetime.datetime.now().hour * 60 + datetime.datetime.now().minute
                 time_remaining_minutes = next_time - current_time_minutes
