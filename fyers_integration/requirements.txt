@@ -14,5 +14,5 @@ pytz==2022.1
 requests==2.27.1
 six==1.16.0
 urllib3==1.26.9
-Werkzeug==2.1.2
+Werkzeug==3.0.6
 zipp==3.8.1
