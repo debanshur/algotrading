@@ -483,31 +483,44 @@ def run():
     print("***** Checking Order Status : Before Loop *****")
     check_order_status()
     while True:
+        now = datetime.datetime.now()
+        current_minutes = now.hour * 60 + now.minute
+
         check_order_status(immediate=True)
         if (datetime.datetime.now().hour * 60 + datetime.datetime.now().minute) >= square_time:
-            check_order_status(force=True)
+            print("***** Squaring off Positions *****")
+            status = check_order_status(force=True)
+            while status is None:
+                print("***** Retry Checking Order Status : squareOff *****")
+                status = check_order_status()
+                time.sleep(2)
             print("***** Trading day closed *****")
             break
 
         elif (datetime.datetime.now().hour * 60 + datetime.datetime.now().minute) >= start_time:
 
             if datetime.datetime.now().hour * 60 + datetime.datetime.now().minute >= exit_time:
-                exit_time = datetime.datetime.now().hour * 60 + datetime.datetime.now().minute + 5
-                time.sleep(2)
-                print("\n\n {} Exit Count : Time - {} ".format(exitcount, datetime.datetime.now()))
-                if exitcount >= 0:
-                    try:
-                        print("***** Checking Order Status : exitcount *****")
-                        status = check_order_status()
-                        while status is None:
-                            print("***** Retry Checking Order Status : exitcount *****")
+                # --- Exit check every 5 minutes ---
+                if current_minutes >= exit_time:
+                    # Round to next 5-min boundary
+                    exit_time = ((current_minutes // 5) + 1) * 5
+                    time.sleep(2)
+                    print("\n\n {} Exit Count : Time - {} ".format(exitcount, datetime.datetime.now()))
+                    if exitcount >= 0:
+                        try:
+                            print("***** Checking Order Status : exitcount *****")
                             status = check_order_status()
-                    except Exception as e:
-                        print("******* Run Error *********", e)
-                exitcount = exitcount + 1
+                            while status is None:
+                                print("***** Retry Checking Order Status : exitcount *****")
+                                status = check_order_status()
+                                time.sleep(2)
+                        except Exception as e:
+                            print("******* Run Error *********", e)
+                    exitcount = exitcount + 1
 
-            if next_time <= datetime.datetime.now().hour * 60 + datetime.datetime.now().minute <= end_time:
-                next_time = datetime.datetime.now().hour * 60 + datetime.datetime.now().minute + 10
+            if next_time <= current_minutes <= end_time:
+                # Round to next 10-min boundary
+                next_time = ((current_minutes // 10) + 1) * 10
                 time.sleep(2)
                 print("\n\n {} Run Count : Time - {} ".format(run_count, datetime.datetime.now()))
                 if run_count >= 0:
