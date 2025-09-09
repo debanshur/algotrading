@@ -4,6 +4,7 @@ import sys
 import time
 
 import pandas as pd
+import pytz
 from kiteconnect import KiteConnect
 
 # Add root directory to Python path to access indicators module
@@ -13,6 +14,17 @@ from zerodha.utils import auth
 from zerodha.utils import historical_data
 
 from indicators import MACD, RSI, EMA, MFI, VWAP
+
+# IST timezone setup
+IST = pytz.timezone('Asia/Kolkata')
+
+def get_ist_now():
+    """Get current time in IST timezone"""
+    return datetime.datetime.now(IST)
+
+def get_ist_today():
+    """Get today's date in IST timezone"""
+    return datetime.datetime.now(IST)
 
 max_amount_per_scrip = 3500
 candlesize = '10minute'
@@ -29,7 +41,7 @@ exitcount = 0
 
 # pd.set_option('display.max_columns',50)
 pd.set_option('display.max_rows', None)
-print("\n******** Started ********* : ", datetime.datetime.now())
+print("\n******** Started ********* : ", get_ist_now())
 
 """
 1. Login to kite
@@ -38,7 +50,7 @@ userdata = auth.get_userdata()
 kite = KiteConnect(api_key=userdata['api_key'])
 kite.set_access_token(userdata['access_token'])
 
-print("******** UserData Loaded ********* : ", datetime.datetime.now())
+print("******** UserData Loaded ********* : ", get_ist_now())
 
 # list all tickers you want to trade
 tickerlist = ["RELIANCE"]
@@ -71,7 +83,7 @@ def compute_data(token):
     global one_hour_rsi
     global one_hour_mfi
     # enddate = datetime.datetime(2020, 5, 4, 15,30,0,0)
-    enddate = datetime.datetime.today()
+    enddate = get_ist_today()
     startdate = enddate - datetime.timedelta(15)  # 12
     try:
         df = historical_data.get(kite, token, startdate, enddate, candlesize)
@@ -96,7 +108,7 @@ def compute_data(token):
 
 def exit_data(token):
     # enddate = datetime.datetime(2020, 5, 4, 15,30,0,0)
-    enddate = datetime.datetime.today()
+    enddate = get_ist_today()
     startdate = enddate - datetime.timedelta(15)  # 12
     try:
         df = historical_data.get(kite, token, startdate, enddate, candlesize)
@@ -254,7 +266,7 @@ def run_strategy():
                 print("         Order : ", "BUY", tickerlist[i], "quantity:", quantity, "macd", round(macd, 4), "mfi:",
                       round(mfi, 2), "rsi:", round(rsi, 2), \
                       "mfi_1hour:", round(one_hour_mfi, 2), "rsi_1hour:", round(one_hour_rsi, 2), "volume:", volume,
-                      datetime.datetime.now())
+                      get_ist_now())
 
             if (ema5 < ema20) and (pre_ema5 > pre_ema20) and (macd < 0) and (close < vwap) and (one_hour_mfi > 30) and (
                     one_hour_mfi < 60) and (one_hour_rsi < 60):
@@ -286,7 +298,7 @@ def run_strategy():
                 print("         Order : ", "SELL", tickerlist[i], "quantity:", quantity, "macd", round(macd, 4), "mfi:",
                       round(mfi, 2), "rsi:", round(rsi, 2), \
                       "mfi_1hour:", round(one_hour_mfi, 2), "rsi_1hour:", round(one_hour_rsi, 2), "volume:", volume,
-                      datetime.datetime.now())
+                      get_ist_now())
 
         except Exception as e:
             print(e)
@@ -490,9 +502,9 @@ def execute_exit_order(data, idx, immediate, force, transaction_type, macd_condi
             # Track the order ID to prevent duplicates
             if order and 'order_id' in order:
                 pending_exit_orders[tradingsymbol] = order['order_id']
-                print(f"         Exit order placed: {transaction_type} {tradingsymbol}, order_id: {order['order_id']}, price: {last_price}, reason: {reason}, time: {datetime.datetime.now()}")
+                print(f"         Exit order placed: {transaction_type} {tradingsymbol}, order_id: {order['order_id']}, price: {last_price}, reason: {reason}, time: {get_ist_now()}")
             else:
-                print(f"         Exit order placed: {transaction_type} {tradingsymbol}, price: {last_price}, reason: {reason}, time: {datetime.datetime.now()}")
+                print(f"         Exit order placed: {transaction_type} {tradingsymbol}, price: {last_price}, reason: {reason}, time: {get_ist_now()}")
 
             # Clean up tracking dictionaries after successful order placement
             if tradingsymbol in orderslist:
@@ -539,7 +551,7 @@ def exit_sell(data, idx, immediate, force):
 
 def calculate_next_times(current_time=None):
     if current_time is None:
-        current_time = datetime.datetime.now()
+        current_time = get_ist_now()
     
     current_minutes = current_time.hour * 60 + current_time.minute
     
@@ -732,7 +744,7 @@ def run():
     print("***** Checking Order Status : Before Loop *****")
     check_order_status()
     while True:
-        now = datetime.datetime.now()
+        now = get_ist_now()
         current_minutes = now.hour * 60 + now.minute
 
         # Immediate check with minimal retries to avoid timing disruption
@@ -742,7 +754,7 @@ def run():
         except Exception as e:
             print(f"******* ERROR in immediate check (continuing): {e}")
             # Continue the loop even if immediate check fails to preserve timing
-        if (datetime.datetime.now().hour * 60 + datetime.datetime.now().minute) >= square_time:
+        if (get_ist_now().hour * 60 + get_ist_now().minute) >= square_time:
             print("***** Squaring off Positions *****")
             status = robust_check_order_status(force=True, max_retries=10, retry_delay=3)
             if status is None:
@@ -750,16 +762,16 @@ def run():
             print("***** Trading day closed *****")
             break
 
-        elif (datetime.datetime.now().hour * 60 + datetime.datetime.now().minute) >= start_time:
+        elif (get_ist_now().hour * 60 + get_ist_now().minute) >= start_time:
             # Refresh current time after potential delays from immediate check
-            current_minutes = datetime.datetime.now().hour * 60 + datetime.datetime.now().minute
+            current_minutes = get_ist_now().hour * 60 + get_ist_now().minute
 
             # --- Exit check every 5 minutes (continues until square_time) ---
             if current_minutes >= exit_time:
                 # Update to next 5-min boundary using consolidated function
                 exit_time = update_next_exit_time(current_minutes, start_time)
                 time.sleep(2)
-                print("\n\n {} Exit Count : Time - {} ".format(exitcount, datetime.datetime.now()))
+                print("\n\n {} Exit Count : Time - {} ".format(exitcount, get_ist_now()))
                 if exitcount >= 0:
                     try:
                         print("***** Checking Order Status : exitcount *****")
@@ -775,7 +787,7 @@ def run():
                 # Update to next 10-min boundary using consolidated function
                 next_time = update_next_strategy_time(current_minutes, start_time)
                 time.sleep(2)
-                print("\n\n {} Run Count : Time - {} ".format(run_count, datetime.datetime.now()))
+                print("\n\n {} Run Count : Time - {} ".format(run_count, get_ist_now()))
                 if run_count >= 0:
                     try:
                         run_strategy()
@@ -784,21 +796,21 @@ def run():
                 run_count = run_count + 1
 
             # --- Status display and sleep logic ---
-            current_time_minutes = datetime.datetime.now().hour * 60 + datetime.datetime.now().minute
+            current_time_minutes = get_ist_now().hour * 60 + get_ist_now().minute
             if current_time_minutes >= end_time:
-                print('******  New Trade window closed ********', datetime.datetime.now())
+                print('******  New Trade window closed ********', get_ist_now())
                 print(f'******  Exit checks continue every 5 minutes until square-off ********')
                 square_off_remaining = square_time - current_time_minutes
                 print(f'******  Minutes until square-off (15:05) ******** {square_off_remaining} minutes')
             elif current_minutes < next_time:
-                print('******  Waiting for next strategy time ********', datetime.datetime.now())
+                print('******  Waiting for next strategy time ********', get_ist_now())
                 time_remaining_minutes = next_time - current_time_minutes
                 print('******  Time Remaining ********', time_remaining_minutes, 'minutes')
             
             print('--------------------------------------------------------------------------------------')
 
             # --- Sleep logic ---
-            now = datetime.datetime.now()
+            now = get_ist_now()
             # Compute seconds until next minute's :05
             sleep_seconds = (60 - now.second) + 5
             if now.second < 5:
@@ -809,9 +821,9 @@ def run():
 
         else:
             start_time = int(10) * 60 + int(55)
-            print('****** Waiting for start time ********', datetime.datetime.now())
+            print('****** Waiting for start time ********', get_ist_now())
             # time.sleep(5)
-            now = datetime.datetime.now()
+            now = get_ist_now()
             current_minutes = now.hour * 60 + now.minute
 
             # Calculate how many seconds to wait
