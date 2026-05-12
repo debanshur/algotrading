@@ -1,0 +1,4 @@
+zerodha/strategies/ema_crossover.py
+  6ecc086a-a917-48a2-8c48-fdd0a9b84895:2026-05-12T04:02:10.363Z 345-347,350,352,356,359,367,370-372,374,376,393,416-417,420-424,429,433-436,439-442,444,450,460,462,464,468,472,476,587,723
+---
+{"schema_version": "authorship/3.0.0", "base_commit_sha": "HEAD~1", "prompts": {"6ecc086a-a917-48a2-8c48-fdd0a9b84895:2026-05-12T04:02:10.363Z": {"agent_id": {"tool": "claude_code", "model": ""}, "human_author": "debanshu.rout@razorpay.com", "accepted_lines": 40, "overriden_lines": 0}}}
