@@ -46,3 +46,4 @@ cryptography==44.0.2
 attrs>=19.1.0
 pyasn1>=0.6.1
 pyasn1-modules>=0.4.2
+pytz>=2023.3
