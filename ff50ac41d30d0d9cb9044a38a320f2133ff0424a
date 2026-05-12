@@ -1,0 +1,4 @@
+zerodha/example/simple.py
+  110e6529-fbeb-43b8-b177-4a8923595059:2026-05-12T04:46:25.016Z 22,28-29,34
+---
+{"schema_version": "authorship/3.0.0", "base_commit_sha": "HEAD~1", "prompts": {"110e6529-fbeb-43b8-b177-4a8923595059:2026-05-12T04:46:25.016Z": {"agent_id": {"tool": "claude_code", "model": ""}, "human_author": "debanshu.rout@razorpay.com", "accepted_lines": 4, "overriden_lines": 0}}}
