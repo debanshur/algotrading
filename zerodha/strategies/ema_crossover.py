@@ -342,106 +342,59 @@ def check_perc(tradingsymbol, average_price, last_price):
     return exit_con
 
 
-def macd_condition_buy_exit(macd_value):
-    """Check MACD condition for exiting buy positions (SELL orders)."""
-    return macd_value < 0
+def cleanup_tracking(tradingsymbol):
+    for d in (orderslist, mfilist, trailing_sl, pending_exit_orders):
+        d.pop(tradingsymbol, None)
 
 
-def macd_condition_sell_exit(macd_value):
-    """Check MACD condition for exiting sell positions (BUY orders)."""
-    return macd_value > 0
-
-
-def mfi_condition_buy_exit(mfi_stored, mfi_current):
-    """Check MFI condition for exiting buy positions (SELL orders)."""
-    return mfi_stored > 79 and mfi_current < 69
-
-
-def mfi_condition_sell_exit(mfi_stored, mfi_current):
-    """Check MFI condition for exiting sell positions (BUY orders)."""
-    return mfi_stored < 21 and mfi_current > 31
-
-
-def mfi_comparison_buy_exit(stored, current):
-    """MFI comparison for buy positions - take higher MFI value."""
-    return stored < current
-
-
-def mfi_comparison_sell_exit(stored, current):
-    """MFI comparison for sell positions - take lower MFI value."""
-    return stored > current
-
-
-def execute_exit_order(data, idx, immediate, force, transaction_type, macd_condition_func, mfi_condition_func, mfi_comparison_func):
+def execute_exit(data, idx, immediate, force, side):
     """
-    Common function to execute exit orders for both buy and sell positions.
-    
+    Execute exit order for a position.
+
     Args:
         data: Position data (DataFrame slice)
-        idx: Index of the position (for reference, but we'll use the actual index)
+        idx: Index of the position
         immediate: Whether to execute immediately
         force: Whether to force exit
-        transaction_type: "SELL" for exit_buy, "BUY" for exit_sell
-        macd_condition_func: Function to check MACD condition (lambda hist_macd: condition)
-        mfi_condition_func: Function to check MFI condition (lambda mfi_stored, mfi_current: condition)
-        mfi_comparison_func: Function to compare MFI values (lambda stored, current: comparison)
+        side: "BUY" or "SELL" — the direction of the original position
     """
     global trailing_sl
     global reason
     global pending_exit_orders
     global orderslist
     global mfilist
-    
-    # Get the actual index from the DataFrame (since df.iloc[[idx]] creates new indexing)
-    actual_idx = data.index[0]
-    
+
+    exit_transaction = "SELL" if side == "BUY" else "BUY"
+
     try:
-        token = data['instrument_token'].iloc[0]
-        average_price = data['average_price'].iloc[0]
-        last_price = data['last_price'].iloc[0]
+        token = int(data['instrument_token'].iloc[0]) if not pd.isna(data['instrument_token'].iloc[0]) else 0
+        average_price = float(data['average_price'].iloc[0]) if not pd.isna(data['average_price'].iloc[0]) else 0.0
+        last_price = float(data['last_price'].iloc[0]) if not pd.isna(data['last_price'].iloc[0]) else 0.0
         tradingsymbol = data['tradingsymbol'].iloc[0]
-        quantity = abs(data['quantity'].iloc[0])
-        
-        # Convert to appropriate types
-        token = int(token) if not pd.isna(token) else 0
-        average_price = float(average_price) if not pd.isna(average_price) else 0.0
-        last_price = float(last_price) if not pd.isna(last_price) else 0.0
-        quantity = int(quantity) if not pd.isna(quantity) else 0
-        
+        quantity = int(abs(data['quantity'].iloc[0])) if not pd.isna(data['quantity'].iloc[0]) else 0
     except Exception as e:
-        print(f"******* ERROR extracting data for {tradingsymbol if 'tradingsymbol' in locals() else 'Unknown'}: {e}")
+        print(f"******* ERROR extracting data: {e}")
         return
 
-    # Check if position still exists with non-zero quantity before placing exit order
     try:
         current_positions = kite.positions()['day']
         current_df = pd.DataFrame.from_dict(current_positions, orient='columns', dtype=None)
-        
+
         position_exists = False
         if not current_df.empty and 'tradingsymbol' in current_df.columns and 'quantity' in current_df.columns:
-            # Find the position for this tradingsymbol
             position_rows = current_df[current_df['tradingsymbol'] == tradingsymbol]
             if not position_rows.empty:
                 current_quantity = position_rows['quantity'].iloc[0]
                 if pd.notna(current_quantity) and float(current_quantity) != 0:
                     position_exists = True
-        
+
         if not position_exists:
             print(f"Position no longer exists or quantity is zero for {tradingsymbol} - skipping exit order")
-            # Clean up tracking dictionaries for closed positions
-            if tradingsymbol in orderslist:
-                del orderslist[tradingsymbol]
-            if tradingsymbol in mfilist:
-                del mfilist[tradingsymbol]
-            if tradingsymbol in trailing_sl:
-                del trailing_sl[tradingsymbol]
-            if tradingsymbol in pending_exit_orders:
-                del pending_exit_orders[tradingsymbol]
+            cleanup_tracking(tradingsymbol)
             return
-            
+
     except Exception as e:
         print(f"******* ERROR checking current positions for {tradingsymbol}: {e}")
-        # Continue with exit order if we can't verify position status
         print(f"Continuing with exit order placement due to position check error")
 
     if force:
@@ -450,7 +403,6 @@ def execute_exit_order(data, idx, immediate, force, transaction_type, macd_condi
     if average_price <= 0:
         return
 
-    # Check if there's already a pending exit order for this symbol
     if check_pending_exit_order(tradingsymbol):
         print(f"Skipping exit for {tradingsymbol} - pending exit order already exists")
         return
@@ -459,39 +411,43 @@ def execute_exit_order(data, idx, immediate, force, transaction_type, macd_condi
 
     if immediate:
         exit_con = check_perc(tradingsymbol, average_price, last_price)
-
     else:
         histdata = exit_data(token)
-        if tradingsymbol not in mfilist:
-            mfilist[tradingsymbol] = histdata.mfi.values[-2]
-        else:
-            # Use the comparison function to determine whether to update MFI
-            if mfi_comparison_func(mfilist[tradingsymbol], histdata.mfi.values[-2]):
-                mfilist[tradingsymbol] = histdata.mfi.values[-2]
+        new_mfi = histdata.mfi.values[-2]
+        macd = histdata.hist_12_26_9.values[-2]
 
-        # Initialize trailing_sl if not exists
+        if tradingsymbol not in mfilist:
+            mfilist[tradingsymbol] = new_mfi
+        elif side == "BUY" and mfilist[tradingsymbol] < new_mfi:
+            mfilist[tradingsymbol] = new_mfi
+        elif side == "SELL" and mfilist[tradingsymbol] > new_mfi:
+            mfilist[tradingsymbol] = new_mfi
+
         if tradingsymbol not in trailing_sl:
             trailing_sl[tradingsymbol] = 0
-            
-        print(tradingsymbol, last_price, histdata.hist_12_26_9.values[-2], mfilist[tradingsymbol],
-              histdata.mfi.values[-2], trailing_sl[tradingsymbol])
+
+        print(tradingsymbol, last_price, macd, mfilist[tradingsymbol], new_mfi, trailing_sl[tradingsymbol])
 
         exit_con = check_perc(tradingsymbol, average_price, last_price)
 
-        # Check MACD condition
-        if macd_condition_func(histdata.hist_12_26_9.values[-2]):
+        if side == "BUY" and macd < 0:
             exit_con = 1
             reason = "macd change"
-        # Check MFI condition
-        elif mfi_condition_func(mfilist[tradingsymbol], histdata.mfi.values[-2]):
+        elif side == "SELL" and macd > 0:
             exit_con = 1
-            reason = "mfi change" if transaction_type == "SELL" else "mfi condition"
+            reason = "macd change"
+        elif side == "BUY" and mfilist[tradingsymbol] > 79 and new_mfi < 69:
+            exit_con = 1
+            reason = "mfi change"
+        elif side == "SELL" and mfilist[tradingsymbol] < 21 and new_mfi > 31:
+            exit_con = 1
+            reason = "mfi condition"
 
     if exit_con == 1 or force:
         try:
             order = kite.place_order(exchange='NSE',
                                      tradingsymbol=tradingsymbol,
-                                     transaction_type=transaction_type,
+                                     transaction_type=exit_transaction,
                                      quantity=quantity,
                                      product='MIS',
                                      order_type='MARKET',
@@ -499,54 +455,25 @@ def execute_exit_order(data, idx, immediate, force, transaction_type, macd_condi
                                      variety="regular"
                                      )
 
-            # Track the order ID to prevent duplicates
             if order and 'order_id' in order:
                 pending_exit_orders[tradingsymbol] = order['order_id']
-                print(f"         Exit order placed: {transaction_type} {tradingsymbol}, order_id: {order['order_id']}, price: {last_price}, reason: {reason}, time: {get_ist_now()}")
+                print(f"         Exit order placed: {exit_transaction} {tradingsymbol}, order_id: {order['order_id']}, price: {last_price}, reason: {reason}, time: {get_ist_now()}")
             else:
-                print(f"         Exit order placed: {transaction_type} {tradingsymbol}, price: {last_price}, reason: {reason}, time: {get_ist_now()}")
+                print(f"         Exit order placed: {exit_transaction} {tradingsymbol}, price: {last_price}, reason: {reason}, time: {get_ist_now()}")
 
-            # Clean up tracking dictionaries after successful order placement
-            if tradingsymbol in orderslist:
-                del orderslist[tradingsymbol]
-            if tradingsymbol in mfilist:
-                del mfilist[tradingsymbol]
-            if tradingsymbol in trailing_sl:
-                del trailing_sl[tradingsymbol]
+            cleanup_tracking(tradingsymbol)
 
         except Exception as e:
             print(f"Error placing exit order for {tradingsymbol}: {e}")
-            # Don't clean up dictionaries if order placement failed
-            # This allows for retry in the next iteration
-            raise e  # Re-raise the exception to be handled by check_order_status
+            raise e
 
 
 def exit_buy(data, idx, immediate, force):
-    """Exit a buy position by placing a sell order."""
-    execute_exit_order(
-        data=data,
-        idx=idx,
-        immediate=immediate,
-        force=force,
-        transaction_type="SELL",
-        macd_condition_func=macd_condition_buy_exit,
-        mfi_condition_func=mfi_condition_buy_exit,
-        mfi_comparison_func=mfi_comparison_buy_exit
-    )
+    execute_exit(data, idx, immediate, force, side="BUY")
 
 
 def exit_sell(data, idx, immediate, force):
-    """Exit a sell position by placing a buy order."""
-    execute_exit_order(
-        data=data,
-        idx=idx,
-        immediate=immediate,
-        force=force,
-        transaction_type="BUY",
-        macd_condition_func=macd_condition_sell_exit,
-        mfi_condition_func=mfi_condition_sell_exit,
-        mfi_comparison_func=mfi_comparison_sell_exit
-    )
+    execute_exit(data, idx, immediate, force, side="SELL")
 
 
 def calculate_next_times(current_time=None):
@@ -657,15 +584,7 @@ def check_order_status(immediate=False, force=False):
                         continue
 
                     if quantity == 0:
-                        # Clean up tracking dictionaries for closed positions
-                        if tradingsymbol in orderslist:
-                            del orderslist[tradingsymbol]
-                        if tradingsymbol in mfilist:
-                            del mfilist[tradingsymbol]
-                        if tradingsymbol in trailing_sl:
-                            del trailing_sl[tradingsymbol]
-                        if tradingsymbol in pending_exit_orders:
-                            del pending_exit_orders[tradingsymbol]
+                        cleanup_tracking(tradingsymbol)
 
                     elif quantity > 0:
                         if tradingsymbol not in orderslist:
@@ -801,7 +720,7 @@ def run():
                 print('******  New Trade window closed ********', get_ist_now())
                 print(f'******  Exit checks continue every 5 minutes until square-off ********')
                 square_off_remaining = square_time - current_time_minutes
-                print(f'******  Minutes until square-off (15:05) ******** {square_off_remaining} minutes')
+                print(f'******  Minutes until square-off ({square_time}) ******** {square_off_remaining} minutes')
             elif current_minutes < next_time:
                 print('******  Waiting for next strategy time ********', get_ist_now())
                 time_remaining_minutes = next_time - current_time_minutes
