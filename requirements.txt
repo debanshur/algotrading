@@ -14,7 +14,7 @@ enum34==1.1.10
 futures==3.4.0
 google-auth==2.17.3
 hyperlink==21.0.0
-idna==2.10
+idna==3.7
 incremental==22.10.0
 ipaddress==1.0.23
 jmespath==0.10.0
